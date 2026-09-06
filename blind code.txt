@@ -1,0 +1,474 @@
+#include <ESP32Servo.h>
+#include <Keypad.h>
+
+// =========================
+// SERVO SETUP
+// =========================
+
+Servo servo1;
+Servo servo2;
+Servo servo3;
+Servo servo4;
+Servo servo5;
+Servo servo6;
+
+// Braille dots:
+// 1 4
+// 2 5
+// 3 6
+
+#define SERVO1_PIN 14
+#define SERVO2_PIN 25
+#define SERVO3_PIN 17
+#define SERVO4_PIN 18
+#define SERVO5_PIN 19
+#define SERVO6_PIN 23
+
+// =========================
+// BUZZER
+// =========================
+
+#define BUZZER_PIN 32
+
+// =========================
+// KEYPAD
+// =========================
+
+const byte ROWS = 4;
+const byte COLS = 4;
+
+char keys[ROWS][COLS] = {
+  {'1', '2', '3', 'A'},
+  {'4', '5', '6', 'B'},
+  {'7', '8', '9', 'C'},
+  {'*', '0', '#', 'D'}
+};
+
+byte rowPins[ROWS] = {
+  27,   // R1
+  26,   // R2
+  33,   // R3
+  22    // R4
+};
+
+byte colPins[COLS] = {
+  21,   // C1
+  13,   // C2
+  5,    // C3
+  4     // C4
+};
+
+Keypad keypad = Keypad(
+  makeKeymap(keys),
+  rowPins,
+  colPins,
+  ROWS,
+  COLS
+);
+
+// =========================
+// BRAILLE NUMBERS
+// =========================
+
+// Order:
+// {dot1, dot2, dot3, dot4, dot5, dot6}
+
+const byte braille[10][6] = {
+
+  // 0
+  {0, 1, 0, 1, 1, 0},
+
+  // 1
+  {1, 0, 0, 0, 0, 0},
+
+  // 2
+  {1, 1, 0, 0, 0, 0},
+
+  // 3
+  {1, 0, 0, 1, 0, 0},
+
+  // 4
+  {1, 0, 0, 1, 1, 0},
+
+  // 5
+  {1, 0, 0, 0, 1, 0},
+
+  // 6
+  {1, 1, 0, 1, 0, 0},
+
+  // 7
+  {1, 1, 0, 1, 1, 0},
+
+  // 8
+  {1, 1, 0, 0, 1, 0},
+
+  // 9
+  {0, 1, 0, 1, 0, 0}
+};
+
+// =========================
+// BRAILLE PLUS
+// =========================
+
+// Plus = dots 3, 4, 6
+
+const byte plusPattern[6] = {
+  0, 0, 1, 1, 0, 1
+};
+
+// =========================
+// VARIABLES
+// =========================
+
+int num1;
+int num2;
+int correctAnswer;
+
+String userAnswer = "";
+
+// 0 = waiting to start
+// 1 = displaying first number
+// 2 = displaying plus
+// 3 = displaying second number
+// 4 = question finished / answer mode
+
+int questionStep = 0;
+
+// =========================
+// SET ALL SERVOS TO 0
+// =========================
+
+void clearBraille() {
+
+  servo1.write(0);
+  servo2.write(0);
+  servo3.write(0);
+  servo4.write(0);
+  servo5.write(0);
+  servo6.write(0);
+
+  delay(300);
+}
+
+// =========================
+// DISPLAY BRAILLE PATTERN
+// =========================
+
+void displayPattern(const byte pattern[6]) {
+
+  servo1.write(pattern[0] ? 90 : 0);
+  servo2.write(pattern[1] ? 90 : 0);
+  servo3.write(pattern[2] ? 90 : 0);
+  servo4.write(pattern[3] ? 90 : 0);
+  servo5.write(pattern[4] ? 90 : 0);
+  servo6.write(pattern[5] ? 90 : 0);
+
+  delay(300);
+}
+
+// =========================
+// DISPLAY NUMBER
+// =========================
+
+void displayNumber(int number) {
+
+  Serial.print("Displaying number: ");
+  Serial.println(number);
+
+  displayPattern(braille[number]);
+}
+
+// =========================
+// DISPLAY PLUS
+// =========================
+
+void displayPlus() {
+
+  Serial.println("Displaying PLUS");
+
+  displayPattern(plusPattern);
+}
+
+// =========================
+// CORRECT BUZZER
+// =========================
+
+void correctBeep() {
+
+  tone(BUZZER_PIN, 1800);
+  delay(300);
+
+  noTone(BUZZER_PIN);
+  delay(100);
+
+  tone(BUZZER_PIN, 2500);
+  delay(500);
+
+  noTone(BUZZER_PIN);
+}
+
+// =========================
+// WRONG BUZZER
+// =========================
+
+void wrongBeep() {
+
+  tone(BUZZER_PIN, 500);
+  delay(400);
+
+  noTone(BUZZER_PIN);
+  delay(100);
+
+  tone(BUZZER_PIN, 300);
+  delay(700);
+
+  noTone(BUZZER_PIN);
+}
+
+// =========================
+// GENERATE QUESTION
+// =========================
+
+void generateQuestion() {
+
+  num1 = random(0, 10);
+  num2 = random(0, 10);
+
+  correctAnswer = num1 + num2;
+
+  userAnswer = "";
+
+  // First number will be displayed
+  questionStep = 1;
+
+  Serial.println();
+  Serial.println("==========================");
+  Serial.println("NEW QUESTION");
+
+  Serial.print("Question: ");
+  Serial.print(num1);
+  Serial.print(" + ");
+  Serial.println(num2);
+
+  Serial.print("Correct answer: ");
+  Serial.println(correctAnswer);
+
+  Serial.println("==========================");
+
+  // Show first number
+  displayNumber(num1);
+}
+
+// =========================
+// SETUP
+// =========================
+
+void setup() {
+
+  Serial.begin(115200);
+
+  // Attach all servos
+  servo1.attach(SERVO1_PIN);
+  servo2.attach(SERVO2_PIN);
+  servo3.attach(SERVO3_PIN);
+  servo4.attach(SERVO4_PIN);
+  servo5.attach(SERVO5_PIN);
+  servo6.attach(SERVO6_PIN);
+
+  // Buzzer
+  pinMode(BUZZER_PIN, OUTPUT);
+
+  // IMPORTANT:
+  // Start with ALL servos DOWN
+  clearBraille();
+
+  randomSeed(micros());
+
+  Serial.println();
+  Serial.println("==========================");
+  Serial.println("   BRAILLE MATH DEVICE");
+  Serial.println("==========================");
+
+  Serial.println();
+  Serial.println("ALL SERVOS = 0");
+  Serial.println("Press D to START");
+  Serial.println();
+}
+
+// =========================
+// MAIN LOOP
+// =========================
+
+void loop() {
+
+  char key = keypad.getKey();
+
+  if (!key) {
+    return;
+  }
+
+  Serial.print("KEY PRESSED: ");
+  Serial.println(key);
+
+  // =====================================
+  // D = START / SUBMIT
+  // =====================================
+
+  if (key == 'D') {
+
+    // -------------------------------
+    // START NEW QUESTION
+    // -------------------------------
+
+    if (questionStep == 0) {
+
+      Serial.println();
+      Serial.println("STARTING QUESTION...");
+
+      generateQuestion();
+
+      return;
+    }
+
+    // -------------------------------
+    // SUBMIT ANSWER
+    // -------------------------------
+
+    if (questionStep == 4) {
+
+      if (userAnswer.length() == 0) {
+
+        Serial.println("PLEASE ENTER AN ANSWER");
+
+        return;
+      }
+
+      int enteredAnswer = userAnswer.toInt();
+
+      Serial.println();
+      Serial.println("==========================");
+
+      Serial.print("YOUR ANSWER: ");
+      Serial.println(enteredAnswer);
+
+      if (enteredAnswer == correctAnswer) {
+
+        Serial.println("CORRECT!");
+
+        correctBeep();
+
+      } else {
+
+        Serial.println("WRONG!");
+
+        Serial.print("CORRECT ANSWER: ");
+        Serial.println(correctAnswer);
+
+        wrongBeep();
+      }
+
+      Serial.println("==========================");
+
+      // IMPORTANT:
+      // Keep ALL servos DOWN after answer checking
+      clearBraille();
+
+      Serial.println();
+      Serial.println("ALL SERVOS = 0");
+      Serial.println("Press D for NEXT QUESTION");
+
+      // Go back to waiting state
+      questionStep = 0;
+      userAnswer = "";
+
+      return;
+    }
+  }
+
+  // =====================================
+  // # = NEXT PART OF QUESTION
+  // =====================================
+
+  if (key == '#') {
+
+    // First number -> PLUS
+    if (questionStep == 1) {
+
+      questionStep = 2;
+
+      displayPlus();
+
+      return;
+    }
+
+    // PLUS -> Second number
+    if (questionStep == 2) {
+
+      questionStep = 3;
+
+      displayNumber(num2);
+
+      return;
+    }
+
+    // Second number -> FINISH QUESTION
+    if (questionStep == 3) {
+
+      questionStep = 4;
+
+      // VERY IMPORTANT:
+      // ALL SIX SERVOS GO TO 0
+      clearBraille();
+
+      Serial.println();
+      Serial.println("==========================");
+      Serial.println("QUESTION FINISHED");
+      Serial.println("ALL SERVOS = 0");
+      Serial.println("ENTER ANSWER");
+      Serial.println("0-9 = Number");
+      Serial.println("* = Erase");
+      Serial.println("D = Submit");
+      Serial.println("==========================");
+
+      return;
+    }
+  }
+
+  // =====================================
+  // NUMBER INPUT
+  // =====================================
+
+  if (key >= '0' && key <= '9') {
+
+    // Only accept answer after question is finished
+    if (questionStep == 4) {
+
+      userAnswer += key;
+
+      Serial.print("ANSWER ENTERED: ");
+      Serial.println(userAnswer);
+
+    } else {
+
+      Serial.println("Press # to finish displaying the question first.");
+    }
+
+    return;
+  }
+
+  // =====================================
+  // * = ERASE ANSWER
+  // =====================================
+
+  if (key == '*') {
+
+    if (questionStep == 4) {
+
+      userAnswer = "";
+
+      Serial.println("ANSWER ERASED");
+    }
+
+    return;
+  }
+}
