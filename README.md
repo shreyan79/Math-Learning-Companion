@@ -1,6 +1,6 @@
 # Math-Learning-Companion
 ESP32-based tactile math learning device for blind and visually impaired students. Users enter numbers with 0–9 push buttons and receive the output as a physical six-dot Braille pattern driven by servo motors. Built to make basic math more accessible using low-cost, inclusive hardware.
-# Tactile Math Learning Companion
+# Math Learning Companion
 
 ESP32-based tactile math learning device for blind and visually impaired students. Users enter numbers with 0–9 push buttons and receive the output as a physical six-dot Braille pattern driven by servo motors. Built to make basic math more accessible using low-cost, inclusive hardware.
 
@@ -24,7 +24,7 @@ ESP32-based tactile math learning device for blind and visually impaired student
 - Platform: Arduino IDE / ESP32  
 - Language: C++  
 
-## Usage
+## Working
 
 1. Power the ESP32 and circuit.  
 2. Press a number button (0–9).  
@@ -34,12 +34,11 @@ ESP32-based tactile math learning device for blind and visually impaired student
 
 ## Future Work
 
-- Add operators (+, −, ×, ÷)  
+- Add operators (×, ÷)  
 - Support multi-digit numbers and equations  
 - Add voice guidance and AI-based practice questions  
 - Improve enclosure and mechanical design  
 
 ## Team
-
-Tech Titans – Enigma Hackathon 2.0  
+Enigma Hackathon 2.0
 Members: Shreyan, Yuvraj
